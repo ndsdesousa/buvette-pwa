@@ -24,3 +24,51 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* PWA Specific Styles */
+@media (display-mode: standalone) {
+  body {
+    user-select: none; /* Disable text selection in PWA mode */
+    -webkit-user-select: none;
+    -webkit-touch-callout: none; /* Disable callout on iOS */
+  }
+}
+
+/* Amélioration des éléments tactiles */
+button, a {
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+  touch-action: manipulation;
+}
+
+/* Scroll personnalisé */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a1a1a1;
+}
+
+/* Hide address bar on mobile */
+@media screen and (max-width: 768px) {
+  .min-h-screen {
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+  }
+}
+
+/* Empêcher le zoom sur les inputs iOS */
+input[type="text"],
+input[type="number"],
+textarea {
+  font-size: 16px !important;
+}
