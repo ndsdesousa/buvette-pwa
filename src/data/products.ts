@@ -1,44 +1,123 @@
 import { Product } from '../types';
 
 export const PRODUCTS: Product[] = [
+  // BOISSONS
   {
     id: 'soda',
-    name: 'Sodas',
+    name: 'Soda',
     price: 2.00,
     category: 'boisson',
   },
   {
-    id: 'vin-rose',
-    name: 'Verre de vin rosé',
-    price: 3.50,
+    id: 'eau-plate',
+    name: 'Eau plate 50cl',
+    price: 0.50,
+    category: 'boisson',
+  },
+  {
+    id: 'cafe',
+    name: 'Café',
+    price: 0.50,
+    category: 'boisson',
+  },
+  {
+    id: 'verre-vin',
+    name: 'Verre vin rouge/rosé',
+    price: 1.50,
+    category: 'boisson',
+  },
+  {
+    id: 'bouteille-vin',
+    name: 'Bouteille vin rouge/rosé',
+    price: 8.00,
+    category: 'boisson',
+  },
+  {
+    id: 'verre-petillant',
+    name: 'Verre pétillant',
+    price: 2.00,
     category: 'boisson',
   },
   {
     id: 'bouteille-petillant',
     name: 'Bouteille pétillant',
-    price: 8.00,
+    price: 12.00,
     category: 'boisson',
   },
+  
+  // BIÈRES
   {
-    id: 'biere-verre',
-    name: 'Bière verre consigné',
+    id: 'biere-blonde',
+    name: 'Bière blonde',
     price: 3.00,
     consigne: 1.00,
     category: 'boisson',
   },
   {
-    id: 'pichet-biere',
-    name: 'Pichet de bière',
-    price: 12.00,
-    consigne: 2.00,
+    id: 'biere-rouge',
+    name: 'Bière rouge',
+    price: 3.50,
+    consigne: 1.00,
     category: 'boisson',
   },
   {
-    id: 'planchette-apero',
-    name: 'Planchette apéro',
-    price: 8.00,
+    id: 'biere-ipa',
+    name: 'Bière IPA',
+    price: 3.50,
+    consigne: 1.00,
+    category: 'boisson',
+  },
+
+  // PICHETS DE BIÈRES (4 bières + 3€ consigne)
+  {
+    id: 'pichet-blonde',
+    name: 'Pichet bière blonde',
+    price: 12.00,
     consigne: 3.00,
     category: 'boisson',
+  },
+  {
+    id: 'pichet-rouge',
+    name: 'Pichet bière rouge',
+    price: 14.00,
+    consigne: 3.00,
+    category: 'boisson',
+  },
+  {
+    id: 'pichet-ipa',
+    name: 'Pichet bière IPA',
+    price: 14.00,
+    consigne: 3.00,
+    category: 'boisson',
+  },
+
+  // RESTAURATION
+  {
+    id: 'planchette-apero',
+    name: 'Planchette apéro',
+    price: 10.00,
+    consigne: 2.00,
+    category: 'restauration',
+  },
+
+  // CONSIGNES
+  {
+    id: 'consigne-gobelet',
+    name: 'Consigne gobelet',
+    price: 1.00,
+    category: 'consigne',
+  },
+  {
+    id: 'consigne-pichet',
+    name: 'Consigne pichet',
+    price: 3.00,
+    category: 'consigne',
+  },
+  {
+    id: 'consigne-planchette',
+    name: 'Consigne planchette',
+    price: 2.00,
+    category: 'consigne',
   },
 ];
 

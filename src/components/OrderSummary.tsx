@@ -32,7 +32,7 @@ export function OrderSummary({
   }
 
   return (
-    <div className="bg-white rounded-lg p-6 shadow-lg border-2 border-blue-200 sticky bottom-4 mx-4">
+    <div className="bg-white rounded-lg p-6 shadow-lg border-2 border-blue-200 sticky bottom-4 mx-4 z-30">
       <h2 className="text-xl font-bold text-gray-900 mb-4">Récapitulatif</h2>
       
       {hasItems && (

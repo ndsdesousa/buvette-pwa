@@ -3,68 +3,29 @@
 import React, { useState, useCallback } from 'react';
 import Link from 'next/link';
 import { PRODUCTS } from '@/data/products';
-import { OrderItem, Order, Product } from '@/types';
+import { OrderItem } from '@/types';
 import { ProductCard } from '@/components/ProductCard';
-import { OrderSummary } from '@/components/OrderSummary';
-import { useLocalStorage } from '@/hooks/useLocalStorage';
 
 export default function HomePage() {
-  // Stockage des produits personnalisés
-  const [customProducts] = useLocalStorage<Product[]>('customProducts', PRODUCTS);
-  
   // État local pour la commande en cours
-  const [quantities, setQuantities] = useState<Record<string, number>>(
-    customProducts.reduce((acc, product) => ({ ...acc, [product.id]: 0 }), {})
+  const [quantities, setQuantities] = useState<Record<string, number>>(() => 
+    PRODUCTS.reduce((acc, product) => ({ ...acc, [product.id]: 0 }), {})
   );
-  const [consignesReturned, setConsignesReturned] = useState(0);
-  
-  // Stockage des commandes pour historique
-  const [dailyOrders, setDailyOrders] = useLocalStorage<Order[]>('dailyOrders', []);
 
   // État pour l'accès admin
   const [adminAccess, setAdminAccess] = useState(false);
+  const [activeCategory, setActiveCategory] = useState<'boissons' | 'nourriture' | 'consignes'>('boissons');
 
   const handleQuantityChange = useCallback((productId: string, quantity: number) => {
-    setQuantities(prev => ({ ...prev, [productId]: quantity }));
+    // S'assurer que la quantité est un nombre valide
+    const safeQuantity = Number(quantity) || 0;
+    setQuantities(prev => ({ ...prev, [productId]: safeQuantity }));
   }, []);
 
   const handleReset = useCallback(() => {
-    setQuantities(customProducts.reduce((acc, product) => ({ ...acc, [product.id]: 0 }), {}));
-    setConsignesReturned(0);
-  }, [customProducts]);
-
-  const handleConfirmOrder = useCallback(() => {
-    const orderItems: OrderItem[] = customProducts
-      .filter(product => quantities[product.id] > 0)
-      .map(product => ({
-        product,
-        quantity: quantities[product.id],
-      }));
-
-    if (orderItems.length === 0 && consignesReturned === 0) return;
-
-    const totalBoissons = orderItems.reduce((sum, item) => sum + (item.quantity * item.product.price), 0);
-    const totalConsignes = orderItems.reduce((sum, item) => {
-      return sum + (item.product.consigne ? item.quantity * item.product.consigne : 0);
-    }, 0);
-    const finalTotal = totalBoissons + totalConsignes - consignesReturned;
-
-    const newOrder: Order = {
-      id: Date.now().toString(),
-      items: orderItems,
-      consignesReturned,
-      total: totalBoissons,
-      totalConsignes,
-      finalTotal,
-      timestamp: new Date(),
-    };
-
-    setDailyOrders(prev => [...prev, newOrder]);
-    handleReset();
-
-    // Afficher une confirmation
-    alert(`Commande confirmée !\nTotal: ${finalTotal.toFixed(2)}€`);
-  }, [quantities, consignesReturned, customProducts, setDailyOrders, handleReset]);
+    const resetQuantities = PRODUCTS.reduce((acc, product) => ({ ...acc, [product.id]: 0 }), {});
+    setQuantities(resetQuantities);
+  }, []);
 
   // Gestion de l'accès admin (appui long)
   const handleLongPress = useCallback(() => {
@@ -83,14 +44,31 @@ export default function HomePage() {
   };
 
   // Calculer les items actuels pour le récapitulatif
-  const currentOrderItems: OrderItem[] = customProducts
-    .filter(product => quantities[product.id] > 0)
+  const currentOrderItems: OrderItem[] = PRODUCTS
+    .filter(product => {
+      const qty = quantities[product.id];
+      return qty != null && qty !== 0;
+    })
     .map(product => ({
       product,
-      quantity: quantities[product.id],
+      quantity: quantities[product.id] || 0,
     }));
 
-  const todayTotal = dailyOrders.reduce((sum, order) => sum + order.finalTotal, 0);
+  // Filtrer les produits selon la catégorie active
+  const getFilteredProducts = () => {
+    switch (activeCategory) {
+      case 'boissons':
+        return PRODUCTS.filter(product => product.category === 'boisson');
+      case 'nourriture':
+        return PRODUCTS.filter(product => product.category === 'restauration');
+      case 'consignes':
+        return PRODUCTS.filter(product => product.category === 'consigne');
+      default:
+        return PRODUCTS;
+    }
+  };
+
+  const filteredProducts = getFilteredProducts();
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -105,37 +83,33 @@ export default function HomePage() {
               onTouchStart={handleMouseDown}
               onTouchEnd={handleMouseUp}
             >
-              🍺 Buvette Comité des Fêtes
+              Comité des fêtes Mettray
             </h1>
-            <div className="flex space-x-4">
+            <div className="flex space-x-3">
+              <button
+                onClick={handleReset}
+                className="bg-transparent hover:bg-orange-100 text-orange-400 hover:text-orange-500 p-2 rounded-lg font-bold transition-colors text-xl"
+                title="Remettre à zéro"
+              >
+                ↻
+              </button>
               {adminAccess && (
                 <Link 
                   href="/admin" 
-                  className="text-yellow-200 hover:text-white text-sm underline"
+                  className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-2 rounded-lg font-medium transition-colors text-sm"
                 >
                   ⚙️ Admin
                 </Link>
               )}
-              <Link 
-                href="/history" 
-                className="text-blue-200 hover:text-white text-sm underline"
-              >
-                📊 Historique
-              </Link>
             </div>
           </div>
-          {dailyOrders.length > 0 && (
-            <div className="text-center mt-2 text-blue-100">
-              {dailyOrders.length} commande(s) - Total du jour: {todayTotal.toFixed(2)}€
-            </div>
-          )}
         </div>
       </header>
 
       {/* Grille des produits */}
-      <main className="max-w-4xl mx-auto p-4 pb-96">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {customProducts.map(product => (
+      <main className="max-w-4xl mx-auto p-4 pb-48">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {filteredProducts.map(product => (
             <ProductCard
               key={product.id}
               product={product}
@@ -146,14 +120,114 @@ export default function HomePage() {
         </div>
       </main>
 
-      {/* Récapitulatif de commande */}
-      <OrderSummary
-        items={currentOrderItems}
-        consignesReturned={consignesReturned}
-        onConsignesReturnedChange={setConsignesReturned}
-        onReset={handleReset}
-        onConfirm={handleConfirmOrder}
-      />
+      {/* Barre de navigation en bas */}
+      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-20">
+        <div className="flex">
+          <button
+            onClick={() => setActiveCategory('boissons')}
+            className={`flex-1 py-3 px-4 text-center font-medium transition-colors ${
+              activeCategory === 'boissons'
+                ? 'bg-blue-500 text-white'
+                : 'bg-white text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            <div className="text-lg mb-1">🥤</div>
+            <div className="text-xs">Boissons</div>
+          </button>
+          
+          <button
+            onClick={() => setActiveCategory('nourriture')}
+            className={`flex-1 py-3 px-4 text-center font-medium transition-colors ${
+              activeCategory === 'nourriture'
+                ? 'bg-blue-500 text-white'
+                : 'bg-white text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            <div className="text-lg mb-1">🍴</div>
+            <div className="text-xs">Nourriture</div>
+          </button>
+          
+          <button
+            onClick={() => setActiveCategory('consignes')}
+            className={`flex-1 py-3 px-4 text-center font-medium transition-colors ${
+              activeCategory === 'consignes'
+                ? 'bg-blue-500 text-white'
+                : 'bg-white text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            <div className="text-lg mb-1">🔄</div>
+            <div className="text-xs">Consignes</div>
+          </button>
+        </div>
+      </nav>
+
+      {/* Récapitulatif simplifié fixe en bas */}
+      {currentOrderItems.length > 0 && (
+        <div className="fixed bottom-20 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-30 p-2">
+          <div className="max-w-4xl mx-auto">
+            {/* Détail des totaux */}
+            <div className="space-y-1">
+              {(() => {
+                const boissonsNourriture = currentOrderItems.filter(item => item.product.category !== 'consigne');
+                const consignesDirectes = currentOrderItems.filter(item => item.product.category === 'consigne');
+                
+                // Calculer le total des boissons/nourriture (sans leurs consignes)
+                const totalBoissonsNourriture = boissonsNourriture.reduce((sum, item) => {
+                  const quantity = Number(item.quantity) || 0;
+                  const price = Number(item.product.price) || 0;
+                  return sum + (quantity * price);
+                }, 0);
+                
+                // Calculer le total des consignes des produits + consignes directes
+                const totalConsignesProduits = boissonsNourriture.reduce((sum, item) => {
+                  const quantity = Number(item.quantity) || 0;
+                  const consigneValue = Number(item.product.consigne) || 0;
+                  return sum + (quantity * consigneValue);
+                }, 0);
+                const totalConsignesDirectes = consignesDirectes.reduce((sum, item) => {
+                  const quantity = Number(item.quantity) || 0;
+                  const price = Number(item.product.price) || 0;
+                  return sum + (quantity * price);
+                }, 0);
+                const totalConsignes = totalConsignesProduits + totalConsignesDirectes;
+                
+                const totalGeneral = totalBoissonsNourriture + totalConsignes;
+
+                return (
+                  <>
+                    {totalBoissonsNourriture > 0 && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-gray-700">Boissons / Nourriture :</span>
+                        <span className="text-xs font-medium">{totalBoissonsNourriture.toFixed(2)}€</span>
+                      </div>
+                    )}
+                    
+                    {totalConsignes !== 0 && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-gray-700">
+                          {totalConsignes > 0 ? 'Consignes :' : 'Restitution consignes :'}
+                        </span>
+                        <span className={`text-xs font-medium ${totalConsignes > 0 ? 'text-orange-600' : 'text-green-600'}`}>
+                          {totalConsignes > 0 ? '+' : ''}{totalConsignes.toFixed(2)}€
+                        </span>
+                      </div>
+                    )}
+                    
+                    <div className="border-t pt-1 mt-1">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-bold text-gray-900">Total :</span>
+                        <span className="text-lg font-bold text-blue-600">
+                          {totalGeneral.toFixed(2)}€
+                        </span>
+                      </div>
+                    </div>
+                  </>
+                );
+              })()}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

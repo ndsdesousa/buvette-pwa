@@ -3,7 +3,7 @@ export interface Product {
   name: string;
   price: number;
   consigne?: number;
-  category: 'boisson' | 'consigne';
+  category: 'boisson' | 'restauration' | 'consigne';
 }
 
 export interface OrderItem {
